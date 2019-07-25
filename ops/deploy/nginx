@@ -1,0 +1,104 @@
+#!/bin/sh
+#
+# nginx - this script start and stop the nginx daemon
+#
+# chkconfig: 2345 55 25
+# description: Startup script for nginx
+# processname: nginx
+# config: /usr/local/nginx/conf/nginx.conf
+# pidfile: /var/run/nginx.pid
+#
+# code by rocketzhang
+#
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+DAEMON="/usr/sbin/nginx"
+CNFFILE="/etc/nginx/nginx.conf"
+PIDFILE="/var/run/nginx.pid"
+LOCKFILE="/var/run/nginx.lock"
+PROG=$(basename $DAEMON)
+
+RETVAL=0
+
+set -e
+[[ -x "$DAEMON" ]] || exit 0
+
+start() {
+	[[ -x $DAEMON ]] || exit 5
+	[[ -f $CNFFILE ]] || exit 6
+	
+	echo -n "Startting Nginx......"
+	$DAEMON -c $CNFFILE || echo -n "Nginx already running!"
+	RETVAL=$?
+	echo
+	[[ $RETVAL -eq 0 ]] && touch $LOCKFILE
+}
+
+stop() {
+	echo -n "Stopping Nginx......"
+
+	if [[ -n `ps aux | grep nginx | awk '/master/{print $2}'` ]]; then
+		kill -QUIT `ps aux | grep nginx | awk '/master/{print $2}'`
+		RETVAL=$?
+		echo
+		[[ $RETVAL -eq 0 ]] && rm -f $LOCKFILE $PIDFILE
+	fi
+}
+
+reload() { 
+	echo -n "Reloading Nginx......"
+	MPID=`ps aux | grep nginx | awk '/master/{print $2}'`
+
+	if [[ -n `ps aux | grep nginx | awk '/master/{print $2}'` ]]; then
+		kill -HUP `ps aux | grep nginx | awk '/master/{print $2}'`
+		RETVAL=$?
+		echo
+	fi
+}  
+
+configtest() {
+  $DAEMON -t -c $CNFFILE
+}
+ 
+
+rh_status() {
+    pidof nginx >/dev/null 2>&1 && echo "Nginx is running...."|| echo "Nginx is stopped"
+}
+
+
+case "$1" in
+start)
+	start
+	;;
+
+stop)
+	stop
+	;;
+
+reload)
+	reload
+	;;
+
+restart)
+	stop
+	sleep 1
+	start
+	;;
+
+configtest)
+        configtest
+        ;;
+
+status)
+        rh_status
+        ;;
+
+*)
+	echo "Usage: service nginx {start|stop|reload|restart|status|configtest}"
+	RETVAL=1
+	;;
+
+esac
+
+exit $RETVAL
+

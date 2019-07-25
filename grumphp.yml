@@ -1,0 +1,15 @@
+parameters:
+  git_dir: .
+  bin_dir: vendor/bin
+  tasks:
+    phpcs:
+      standard: PSR2,PSR1
+      ignore_patterns:
+      - ./dev/resources/*
+      - ./dev/database/*,
+      - ./dev/bootstrap/*,
+      - ./dev/public/*,
+      - ./dev/_ide_helper*
+      - ./dev/.phpstorm.meta.php
+      - ./ops
+      - ./test
